@@ -2,7 +2,10 @@ module Main where
 
 import Lib
 
+import Data.Foldable
+import System.Environment
+
 main :: IO ()
 main = do
-  x <- numPages "http://..."
-  print x
+  args <- getArgs
+  traverse_ (\url -> print =<< numPages url) args
