@@ -1,19 +1,12 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE Rank2Types #-}
-
 module Lib
-    ( someFunc
+    ( numPages,
+      ShkoloUrl
     ) where
 
 import Network.Wreq
-import Text.HTML.Scalpel
 import Control.Lens
-import qualified Data.ByteString.Lazy as LBS
 import Control.Exception as E
 import Network.HTTP.Client
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
 
 type ShkoloUrl = String
 
@@ -31,15 +24,15 @@ whatTheNat oracle =
         if areWeThereYet
           then guessRange (startAt * 2)
           else return (startAt `div` 2, startAt)
-      shrinkRange (from, to) =
-        if succ from >= to
-          then return from
+      shrinkRange (startAt, finishAt) =
+        if succ startAt >= finishAt
+          then return startAt
           else do
-            let mid = (from + to) `div` 2
+            let mid = (startAt + finishAt) `div` 2
             isMidThereYet <- oracle mid
             if isMidThereYet
-              then shrinkRange (mid, to)
-              else shrinkRange (from, mid)
+              then shrinkRange (mid, finishAt)
+              else shrinkRange (startAt, mid)
   in do
     rng <- guessRange 1
     shrinkRange rng
