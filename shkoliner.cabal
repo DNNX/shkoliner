@@ -25,6 +25,8 @@ library
                      , directory
                      , base64-bytestring
                      , utf8-string
+                     , time
+                     , text
                      , scalpel
   default-language:    Haskell2010
   ghc-options:       -Wall -Werror

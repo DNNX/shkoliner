@@ -1,7 +1,8 @@
 module Lib
     ( numPages,
       ShkoloUrl,
-      cachedGet
+      cachedGet,
+      ArticleMetaData(..)
     ) where
 
 import Network.Wreq
@@ -13,6 +14,8 @@ import qualified Data.ByteString.Lazy.UTF8 as LBS8
 import qualified Data.ByteString.Base64.Lazy as LBase64
 import System.FilePath
 import System.Directory
+import Data.Time
+import qualified Data.Text as T
 
 type ShkoloUrl = String
 
@@ -68,3 +71,9 @@ cachedGet url = do
 
 fsKey :: ShkoloUrl -> FilePath
 fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
+
+data ArticleMetaData = ArticleMetaData
+    { _title :: T.Text
+    , _publishedAt :: UTCTime
+    , _link :: T.Text
+    }
