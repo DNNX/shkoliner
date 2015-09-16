@@ -1,8 +1,11 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Lib
     ( numPages,
       ShkoloUrl,
       cachedGet,
-      ArticleMetaData(..)
+      ArticleMetaData(..),
+      scrapeAll
     ) where
 
 import Network.Wreq
@@ -15,7 +18,10 @@ import qualified Data.ByteString.Base64.Lazy as LBase64
 import System.FilePath
 import System.Directory
 import Data.Time
-import qualified Data.Text as T
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.Encoding as LT
+import Text.HTML.Scalpel
+import Data.Maybe
 
 type ShkoloUrl = String
 
@@ -73,7 +79,34 @@ fsKey :: ShkoloUrl -> FilePath
 fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
 
 data ArticleMetaData = ArticleMetaData
-    { _title :: T.Text
+    { _title :: LT.Text
     , _publishedAt :: UTCTime
-    , _link :: T.Text
+    , _link :: LT.Text
     }
+
+scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
+scrapeAll baseUrl = do
+  nPages <- numPages baseUrl
+  metass <- traverse scrapePage $ fmap (pageUrl baseUrl) [1..nPages]
+  return $ concat metass
+
+scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
+scrapePage url = do
+    bytes :: LBS.ByteString <- cachedGet url
+    let txt = LT.decodeUtf8 bytes
+    return $ fromJust $ scrapeStringLike txt articles
+  where
+    articles :: Scraper LT.Text [ArticleMetaData]
+    articles = chroots ("article" @: [hasClass "news_for_copy"]) article
+
+    article :: Scraper LT.Text ArticleMetaData
+    article = do
+      _title <- text $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "span"
+      _pubAtStr <- attr "datetime" "time"
+      _pubAt <- parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" $ LT.unpack _pubAtStr
+      _link <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
+      return $
+        ArticleMetaData
+          _title
+          _pubAt
+          _link
