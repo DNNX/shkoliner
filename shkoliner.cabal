@@ -21,6 +21,10 @@ library
                      , lens
                      , bytestring
                      , http-client
+                     , filepath
+                     , directory
+                     , base64-bytestring
+                     , utf8-string
                      , scalpel
   default-language:    Haskell2010
   ghc-options:       -Wall -Werror

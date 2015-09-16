@@ -1,12 +1,18 @@
 module Lib
     ( numPages,
-      ShkoloUrl
+      ShkoloUrl,
+      cachedGet
     ) where
 
 import Network.Wreq
 import Control.Lens
 import Control.Exception as E
-import Network.HTTP.Client
+import qualified Network.HTTP.Client as HTTP
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.UTF8 as LBS8
+import qualified Data.ByteString.Base64.Lazy as LBase64
+import System.FilePath
+import System.Directory
 
 type ShkoloUrl = String
 
@@ -42,7 +48,23 @@ isShkoloOk url = do
     putStrLn url
     (get url >> return True) `E.catch` handler
   where
-    handler e@(StatusCodeException s _ _)
+    handler e@(HTTP.StatusCodeException s _ _)
       | s ^. statusCode == 404 = return False
       | otherwise              = throwIO e
     handler e                  = throwIO e
+
+cachedGet :: ShkoloUrl -> IO LBS.ByteString
+cachedGet url = do
+  let k = fsKey url
+  let fPath = "./cache" </> k
+  cached <- doesFileExist fPath
+  if cached
+    then LBS.readFile fPath
+    else do
+      resp <- get url
+      let respBody = resp ^. responseBody
+      LBS.writeFile fPath respBody
+      return respBody
+
+fsKey :: ShkoloUrl -> FilePath
+fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
