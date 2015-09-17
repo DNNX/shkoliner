@@ -82,7 +82,7 @@ data ArticleMetaData = ArticleMetaData
     { _title :: LT.Text
     , _publishedAt :: UTCTime
     , _link :: LT.Text
-    }
+    } deriving (Show)
 
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
