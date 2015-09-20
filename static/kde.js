@@ -1,14 +1,15 @@
 // Based on http://bl.ocks.org/900762 by John Firebaugh
 d3.json("dummy.json", function(faithful) {
   data = faithful;
-  var w = 800,
+  var w = 600,
       h = 400,
+      numBins = 24,
       x = d3.scale.linear().domain([0, 24]).range([0, w]),
       xAng = d3.scale.linear().domain([0, 24]).range([0, 2*Math.PI]),
-      bins = d3.layout.histogram().frequency(false).bins(x.ticks(24))(data),
-      max = d3.max(bins, function(d) { return d.y; }),
-      y = d3.scale.linear().domain([0, 0.2]).range([0, h]),
-      yRad = d3.scale.linear().domain([0, 0.15]).range([0, h/2]),
+      bins = d3.layout.histogram().frequency(false).bins(x.ticks(numBins))(data),
+      max = d3.max(bins, function(d) { return d.y; }) * 1.25,
+      y = d3.scale.linear().domain([0, max]).range([0, h]),
+      yRad = d3.scale.linear().domain([0, max]).range([0, h/2]),
       kde = science.stats.kde().sample(data);
 
   var vis = d3.select("body")
@@ -21,17 +22,21 @@ d3.json("dummy.json", function(faithful) {
     .enter().append("g")
       .attr("class", "bar")
       .attr("transform", function(d, i) {
+        console.log(d)
         return "translate(" + x(d.x) + "," + (h - y(d.y)) + ")";
       });
 
   bars.append("rect")
       .attr("fill", "steelblue")
-      .attr("width", function(d) { return 35; })
+      .attr("width", function(d) { return w / numBins; })
       .attr("height", function(d) { return y(d.y); });
 
-  var line = d3.svg.line()
+  var radial = d3.svg.line()
       .x(function(d) { return w/2 + yRad(d[1]) * Math.sin(xAng(d[0])); })
       .y(function(d) { return h/2 - yRad(d[1]) * Math.cos(xAng(d[0])); });
+  var line = d3.svg.line()
+      .x(function(d) { return x(d[0]); })
+      .y(function(d) { return h - y(d[1]); });
 
   vis.selectAll("circle")
       .data([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
@@ -42,10 +47,20 @@ d3.json("dummy.json", function(faithful) {
       .attr("stroke", "gray")
       .attr("r", function(r) { return r; });
 
-  vis.selectAll("path")
+  vis.selectAll("path.t")
       .data(d3.values(science.stats.bandwidth).slice(1,2))
     .enter().append("path")
+      .classed("t", true)
+      .attr("d", function(h) {
+        return radial(kde.bandwidth(h)(d3.range(0, 24, .1)));
+      });
+
+  vis.selectAll("path.r")
+      .data(d3.values(science.stats.bandwidth).slice(1,2))
+    .enter().append("path")
+      .classed("r", true)
       .attr("d", function(h) {
         return line(kde.bandwidth(h)(d3.range(0, 24, .1)));
       });
+
 });
