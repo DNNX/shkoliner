@@ -39,6 +39,9 @@ executable shkoliner-exe
                      , shkoliner
                      , servant
                      , servant-server
+                     , aeson
+                     , wai
+                     , warp
   default-language:    Haskell2010
 
 test-suite shkoliner-test

@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Lib
     ( numPages,
@@ -22,6 +23,9 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
 import Text.HTML.Scalpel
 import Data.Maybe
+import Data.Aeson
+import GHC.Generics
+
 
 type ShkoloUrl = String
 
@@ -82,7 +86,9 @@ data ArticleMetaData = ArticleMetaData
     { _title :: LT.Text
     , _publishedAt :: UTCTime
     , _link :: LT.Text
-    } deriving (Show)
+    } deriving (Show, Generic)
+
+instance ToJSON ArticleMetaData
 
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
