@@ -1,5 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Lib
     ( numPages,
@@ -105,7 +106,15 @@ instance FromRecord ArticleMetaData where
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
 parseTime' = parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" . LT.unpack
 
---instance ToRecord ArticleMetaData
+unparseTime :: UTCTime -> LT.Text
+unparseTime = LT.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z"
+
+instance ToRecord ArticleMetaData where
+  toRecord ArticleMetaData{..} = record [
+    toField _title,
+    toField (unparseTime _publishedAt),
+    toField _link
+    ]
 
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
