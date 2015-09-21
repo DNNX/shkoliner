@@ -2,7 +2,7 @@
 d3.json("dummy.json", function(faithful) {
   data = faithful;
   var margin = {top: 20, right: 10, bottom: 20, left: 10},
-      w = 600 - margin.left - margin.right,
+      w = 800 - margin.left - margin.right,
       h = 400 - margin.top - margin.bottom,
       numBins = 24,
       x = d3.scale.linear().domain([0, 24]).range([0, w]),
@@ -27,7 +27,6 @@ d3.json("dummy.json", function(faithful) {
   var bars = barsEnter.append("g")
     .attr("class", "bar")
     .attr("transform", function(d, i) {
-      console.log(d)
       return "translate(" + x(d.x) + "," + (h - y(d.y)) + ")";
     });
 
@@ -35,6 +34,13 @@ d3.json("dummy.json", function(faithful) {
       .attr("fill", "steelblue")
       .attr("width", function(d) { return x(d.dx); })
       .attr("height", function(d) { return y(d.y); });
+
+  bars.append("text")
+      .attr("x", 7)
+      .attr("y", function(d) { return y(d.y)+9; })
+      .attr("dy", ".35em")
+      .html(function(x, i) { return i + ":xx" /*"&chcy;"*/; });
+
 
   var radial = d3.svg.line()
       .x(function(d) { return w/2 + yRad(d[1]) * Math.sin(xAng(d[0])); })
