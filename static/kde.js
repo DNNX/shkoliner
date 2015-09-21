@@ -1,8 +1,9 @@
 // Based on http://bl.ocks.org/900762 by John Firebaugh
 d3.json("dummy.json", function(faithful) {
   data = faithful;
-  var w = 600,
-      h = 400,
+  var margin = {top: 20, right: 10, bottom: 20, left: 10},
+      w = 600 - margin.left - margin.right,
+      h = 400 - margin.top - margin.bottom,
       numBins = 24,
       x = d3.scale.linear().domain([0, 24]).range([0, w]),
       xAng = d3.scale.linear().domain([0, 24]).range([0, 2*Math.PI]),
@@ -14,8 +15,10 @@ d3.json("dummy.json", function(faithful) {
 
   var vis = d3.select("body")
     .append("svg")
-      .attr("width", w)
-      .attr("height", h);
+      .attr("width", w + margin.left + margin.right)
+      .attr("height", h + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   var bars = vis.selectAll("g.bar")
       .data(bins)
