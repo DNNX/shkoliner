@@ -29,6 +29,7 @@ library
                      , text
                      , scalpel
                      , aeson
+                     , cassava
   default-language:    Haskell2010
   ghc-options:       -Wall
 
