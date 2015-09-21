@@ -13,4 +13,7 @@ import System.Environment
 main :: IO ()
 main = do
   args <- getArgs
-  traverse_ (\x -> scrapeAll x) args
+  forM_ args $ \category -> do
+    -- kinda hiding from search engines
+    articles <- scrapeAll ("http://" ++ category ++ reverse "yb.renilno.")
+    dumpMetas articles (category ++ ".csv")

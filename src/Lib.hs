@@ -7,7 +7,8 @@ module Lib
       ShkoloUrl,
       cachedGet,
       ArticleMetaData(..),
-      scrapeAll
+      scrapeAll,
+      dumpMetas
     ) where
 
 import Network.Wreq
@@ -121,6 +122,10 @@ scrapeAll baseUrl = do
   nPages <- numPages baseUrl
   metass <- traverse scrapePage $ fmap (pageUrl baseUrl) [1..nPages]
   return $ concat metass
+
+dumpMetas :: [ArticleMetaData] -> FilePath -> IO ()
+dumpMetas articles fName = do
+  LBS.writeFile fName $ Data.Csv.encode articles
 
 scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
 scrapePage url = do
