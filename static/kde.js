@@ -20,18 +20,20 @@ d3.json("dummy.json", function(faithful) {
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var bars = vis.selectAll("g.bar")
+  var barsEnter = vis.selectAll("g.bar")
       .data(bins)
-    .enter().append("g")
-      .attr("class", "bar")
-      .attr("transform", function(d, i) {
-        console.log(d)
-        return "translate(" + x(d.x) + "," + (h - y(d.y)) + ")";
-      });
+    .enter();
+
+  var bars = barsEnter.append("g")
+    .attr("class", "bar")
+    .attr("transform", function(d, i) {
+      console.log(d)
+      return "translate(" + x(d.x) + "," + (h - y(d.y)) + ")";
+    });
 
   bars.append("rect")
       .attr("fill", "steelblue")
-      .attr("width", function(d) { return w / numBins; })
+      .attr("width", function(d) { return x(d.dx); })
       .attr("height", function(d) { return y(d.y); });
 
   var radial = d3.svg.line()
@@ -42,13 +44,13 @@ d3.json("dummy.json", function(faithful) {
       .y(function(d) { return h - y(d[1]); });
 
   vis.selectAll("circle")
-      .data([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+      .data(y.ticks(10))
     .enter().append("circle")
       .attr("cx", w/2)
       .attr("cy", h/2)
       .attr("fill", "none")
       .attr("stroke", "gray")
-      .attr("r", function(r) { return r; });
+      .attr("r", function(r) { return y(r)/2; });
 
   vis.selectAll("path.t")
       .data(d3.values(science.stats.bandwidth).slice(1,2))
