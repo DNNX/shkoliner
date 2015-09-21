@@ -64,17 +64,21 @@ isShkoloOk url = do
     handler e                  = throwIO e
 
 cachedGet :: ShkoloUrl -> IO LBS.ByteString
-cachedGet url = do
-  let k = fsKey url
-  let fPath = "./cache" </> k
-  cached <- doesFileExist fPath
-  if cached
+cachedGet =
+  cached
+    (\url ->  "./cache" </> fsKey url)
+    (\url -> view responseBody <$> get url)
+
+cached :: (k -> FilePath) -> (k -> IO LBS.ByteString) -> k -> IO LBS.ByteString
+cached toFilePath load key = do
+  let fPath = toFilePath key
+  cachedAlready <- doesFileExist fPath
+  if cachedAlready
     then LBS.readFile fPath
     else do
-      resp <- get url
-      let respBody = resp ^. responseBody
-      LBS.writeFile fPath respBody
-      return respBody
+      d <- load key
+      LBS.writeFile fPath d
+      return d
 
 fsKey :: ShkoloUrl -> FilePath
 fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
