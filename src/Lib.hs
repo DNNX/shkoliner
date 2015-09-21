@@ -95,11 +95,11 @@ instance ToJSON ArticleMetaData
 
 instance FromRecord ArticleMetaData where
   parseRecord v
-    | length v == 3 = do
-        _title <- v .! 0
-        _pubAt <- v .! 1 >>= parseTime'
-        _link  <- v .! 2
-        return $ ArticleMetaData _title _pubAt _link
+    | length v == 3 =
+        ArticleMetaData
+          <$>  v .! 0
+          <*> (v .! 1 >>= parseTime')
+          <*>  v .! 2
     | otherwise = mzero
 
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
