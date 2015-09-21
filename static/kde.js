@@ -8,7 +8,7 @@ d3.json("dummy.json", function(faithful) {
       x = d3.scale.linear().domain([0, 24]).range([0, w]),
       xAng = d3.scale.linear().domain([0, 24]).range([0, 2*Math.PI]),
       bins = d3.layout.histogram().frequency(false).bins(x.ticks(numBins))(data),
-      max = d3.max(bins, function(d) { return d.y; }) * 1.25,
+      max = d3.max(bins, function(d) { return d.y; }),
       y = d3.scale.linear().domain([0, max]).range([0, h]),
       yRad = d3.scale.linear().domain([0, max]).range([0, h/2]),
       kde = science.stats.kde().sample(data);
