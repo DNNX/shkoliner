@@ -11,6 +11,8 @@ module Lib
       dumpMetas
     ) where
 
+import Types
+
 import Network.Wreq
 import Control.Lens
 import Control.Exception as E
@@ -20,17 +22,11 @@ import qualified Data.ByteString.Lazy.UTF8 as LBS8
 import qualified Data.ByteString.Base64.Lazy as LBase64
 import System.FilePath
 import System.Directory
-import Data.Time
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
 import Text.HTML.Scalpel
 import Data.Maybe
-import Data.Aeson
-import GHC.Generics
 import Data.Csv
-import Control.Monad
-
-type ShkoloUrl = String
 
 numPages :: ShkoloUrl -> IO Int
 numPages baseUrl = whatTheNat $ \page -> do
@@ -84,36 +80,6 @@ cachedGet url = do
 
 fsKey :: ShkoloUrl -> FilePath
 fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
-
-data ArticleMetaData = ArticleMetaData
-    { _title :: LT.Text
-    , _publishedAt :: UTCTime
-    , _link :: LT.Text
-    } deriving (Show, Generic)
-
-instance ToJSON ArticleMetaData
-
-instance FromRecord ArticleMetaData where
-  parseRecord v
-    | length v == 3 =
-        ArticleMetaData
-          <$>  v .! 0
-          <*> (v .! 1 >>= parseTime')
-          <*>  v .! 2
-    | otherwise = mzero
-
-parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
-parseTime' = parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" . LT.unpack
-
-unparseTime :: UTCTime -> LT.Text
-unparseTime = LT.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z"
-
-instance ToRecord ArticleMetaData where
-  toRecord ArticleMetaData{..} = record [
-    toField _title,
-    toField (unparseTime _publishedAt),
-    toField _link
-    ]
 
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
