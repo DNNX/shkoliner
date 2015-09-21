@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Main where

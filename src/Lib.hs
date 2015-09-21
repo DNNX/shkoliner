@@ -1,6 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Lib
     ( numPages,
@@ -29,7 +27,7 @@ import Data.Maybe
 import Data.Csv
 
 numPages :: ShkoloUrl -> IO Int
-numPages baseUrl = whatTheNat $ \page -> do
+numPages baseUrl = whatTheNat $ \page ->
   isShkoloOk $ pageUrl baseUrl page
 
 pageUrl :: ShkoloUrl -> Int -> ShkoloUrl
@@ -88,7 +86,7 @@ scrapeAll baseUrl = do
   return $ concat metass
 
 dumpMetas :: [ArticleMetaData] -> FilePath -> IO ()
-dumpMetas articles fName = do
+dumpMetas articles fName =
   LBS.writeFile fName $ Data.Csv.encode articles
 
 scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
