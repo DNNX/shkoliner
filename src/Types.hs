@@ -19,7 +19,7 @@ type ShkoloUrl = String
 
 data ArticleMetaData = ArticleMetaData
     { _title :: LT.Text
-    , _publishedAt :: UTCTime
+    , _publishedAt :: ZonedTime
     , _link :: LT.Text
     } deriving (Show, Generic)
 
@@ -45,7 +45,7 @@ instance ToRecord ArticleMetaData where
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
 parseTime' = parseTimeM False defaultTimeLocale fmt . LT.unpack
 
-unparseTime :: UTCTime -> LT.Text
+unparseTime :: ZonedTime -> LT.Text
 unparseTime = LT.pack . formatTime defaultTimeLocale fmt
 
 fmt :: String
