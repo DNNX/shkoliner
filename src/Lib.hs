@@ -108,9 +108,11 @@ scrapePage url = do
       _pubAt <- attr "datetime" "time" >>= parseTime'
       _link  <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
       _newsId <- attr "news_id" ("span" @: [hasClass "news_view_count"])
+      _author <- Just <$> text ("span" @: [hasClass "right-side"])
       return $
         ArticleMetaData
           _title
           _pubAt
           _link
           _newsId
+          _author

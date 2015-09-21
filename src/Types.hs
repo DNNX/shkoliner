@@ -22,6 +22,7 @@ data ArticleMetaData = ArticleMetaData
     , _publishedAt :: ZonedTime
     , _link :: LT.Text
     , _newsId :: LT.Text
+    , _author :: Maybe LT.Text
     } deriving (Show, Generic)
 
 instance ToJSON ArticleMetaData
@@ -34,6 +35,7 @@ instance FromRecord ArticleMetaData where
           <*> (v .! 1 >>= parseTime')
           <*>  v .! 2
           <*>  v .! 3
+          <*>  v .! 4
     | otherwise = mzero
 
 
@@ -42,7 +44,8 @@ instance ToRecord ArticleMetaData where
     toField _title,
     toField (unparseTime _publishedAt),
     toField _link,
-    toField _newsId
+    toField _newsId,
+    toField _author
     ]
 
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
