@@ -96,13 +96,11 @@ instance ToJSON ArticleMetaData
 instance FromRecord ArticleMetaData where
   parseRecord v
     | length v == 3 = do
-        _title    <- v .! 0
-        _pubAtStr <- v .! 1
-        _pubAt    <- parseTime' _pubAtStr
-        _link     <- v .! 2
+        _title <- v .! 0
+        _pubAt <- v .! 1 >>= parseTime'
+        _link  <- v .! 2
         return $ ArticleMetaData _title _pubAt _link
     | otherwise = mzero
-
 
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
 parseTime' = parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" . LT.unpack
@@ -139,9 +137,8 @@ scrapePage url = do
     article :: Scraper LT.Text ArticleMetaData
     article = do
       _title <- text $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "span"
-      _pubAtStr <- attr "datetime" "time"
-      _pubAt <- parseTime' _pubAtStr
-      _link <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
+      _pubAt <- attr "datetime" "time" >>= parseTime'
+      _link  <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
       return $
         ArticleMetaData
           _title
