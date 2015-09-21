@@ -25,7 +25,8 @@ import Text.HTML.Scalpel
 import Data.Maybe
 import Data.Aeson
 import GHC.Generics
-
+import Data.Csv
+import Control.Monad
 
 type ShkoloUrl = String
 
@@ -90,6 +91,22 @@ data ArticleMetaData = ArticleMetaData
 
 instance ToJSON ArticleMetaData
 
+instance FromRecord ArticleMetaData where
+  parseRecord v
+    | length v == 3 = do
+        _title    <- v .! 0
+        _pubAtStr <- v .! 1
+        _pubAt    <- parseTime' _pubAtStr
+        _link     <- v .! 2
+        return $ ArticleMetaData _title _pubAt _link
+    | otherwise = mzero
+
+
+parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
+parseTime' = parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" . LT.unpack
+
+--instance ToRecord ArticleMetaData
+
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
   nPages <- numPages baseUrl
@@ -109,7 +126,7 @@ scrapePage url = do
     article = do
       _title <- text $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "span"
       _pubAtStr <- attr "datetime" "time"
-      _pubAt <- parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" $ LT.unpack _pubAtStr
+      _pubAt <- parseTime' _pubAtStr
       _link <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
       return $
         ArticleMetaData
