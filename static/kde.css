@@ -7,3 +7,13 @@ path {
   stroke-width: 1.5px;
   fill: none;
 }
+
+path.t {
+  stroke: green;
+  stroke-width: 3px;
+}
+
+path.r {
+  stroke: blue;
+  stroke-width: 3px;
+}
