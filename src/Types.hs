@@ -23,7 +23,7 @@ data ArticleMetaData = ArticleMetaData
     , _publishedAt :: ZonedTime
     , _link :: LT.Text
     , _newsId :: LT.Text
-    , _author :: Maybe LT.Text
+    , _author :: LT.Text
     } deriving (Show, Generic)
 
 instance ToJSON ArticleMetaData

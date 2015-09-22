@@ -132,8 +132,8 @@ extractLink = LT.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>
 extractNewsId :: [Tag LBS.ByteString] -> LT.Text
 extractNewsId = LT.decodeUtf8 . fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
 
-extractAuthor :: [Tag LBS.ByteString] -> Maybe LT.Text
-extractAuthor = Just . LT.dropAround (\x -> x == '.' || isSpace x) . LT.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
+extractAuthor :: [Tag LBS.ByteString] -> LT.Text
+extractAuthor = LT.dropAround (\x -> x == '.' || isSpace x) . LT.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
 
 takeBetweens :: String -> String -> [Tag LBS.ByteString] -> [[Tag LBS.ByteString]]
 takeBetweens fromTag toTag = fmap (takeWhile (~/= toTag)) . sections (~== fromTag)
