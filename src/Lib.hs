@@ -27,6 +27,7 @@ import Text.HTML.TagSoup
 import Data.Csv
 import Data.Time
 import Data.Char
+import Data.Maybe
 
 numPages :: ShkoloUrl -> IO Int
 numPages baseUrl = whatTheNat $ \page ->
@@ -104,7 +105,10 @@ extractArticles :: [Tag LBS.ByteString] -> [ArticleMetaData]
 extractArticles allTags =
   let articleSections = sections articleTag allTags
       articleTag :: Tag LBS.ByteString -> Bool
-      articleTag = (~== ("<article class=\"b-posts-1-item b-content-posts-1-item news_for_copy\">" :: String))
+      articleTag tag =
+        case tag of
+          TagOpen "article" attrs -> "b-posts-1-item" `LBS.isPrefixOf` (fromMaybe LBS.empty $ Prelude.lookup "class" attrs)
+          _                       -> False
   in fmap extractArticle articleSections
 
 extractArticle :: [Tag LBS.ByteString] -> ArticleMetaData
@@ -138,4 +142,4 @@ takeBetween :: String -> String -> [Tag LBS.ByteString] -> [Tag LBS.ByteString]
 takeBetween fromTag toTag soup =
   case takeBetweens fromTag toTag soup of
     subSoup:_ -> subSoup
-    []        -> error "can't find a tag"
+    []        -> error $ "can't find a tag" ++ fromTag ++ " " ++ toTag ++ " " ++ show soup
