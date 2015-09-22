@@ -100,19 +100,20 @@ dumpMetas articles fName =
 scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
 scrapePage url = do
   bytes :: BS.ByteString <- cachedGet url
-  return $ extractArticles $ parseTags bytes
+  let txt = T.decodeUtf8 bytes
+  return $ extractArticles $ parseTags txt
 
-extractArticles :: [Tag BS.ByteString] -> [ArticleMetaData]
+extractArticles :: [Tag T.Text] -> [ArticleMetaData]
 extractArticles allTags =
   let articleSections = sections articleTag allTags
-      articleTag :: Tag BS.ByteString -> Bool
+      articleTag :: Tag T.Text -> Bool
       articleTag tag =
         case tag of
-          TagOpen "article" attrs -> "b-posts-1-item" `BS.isPrefixOf` fromMaybe BS.empty (Prelude.lookup "class" attrs)
+          TagOpen "article" attrs -> "b-posts-1-item" `T.isPrefixOf` fromMaybe "" (Prelude.lookup "class" attrs)
           _                       -> False
   in fmap extractArticle articleSections
 
-extractArticle :: [Tag BS.ByteString] -> ArticleMetaData
+extractArticle :: [Tag T.Text] -> ArticleMetaData
 extractArticle tags =
   ArticleMetaData
     (extractTitle tags)
@@ -121,25 +122,25 @@ extractArticle tags =
     (extractNewsId tags)
     (extractAuthor tags)
 
-extractTitle :: [Tag BS.ByteString] -> T.Text
-extractTitle = T.decodeUtf8 . innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+extractTitle :: [Tag T.Text] -> T.Text
+extractTitle = innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
 
-extractPubAt :: [Tag BS.ByteString] -> ZonedTime
-extractPubAt = parseTime' . T.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
+extractPubAt :: [Tag T.Text] -> ZonedTime
+extractPubAt = parseTime' . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
 
-extractLink :: [Tag BS.ByteString] -> T.Text
-extractLink = T.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+extractLink :: [Tag T.Text] -> T.Text
+extractLink = fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
 
-extractNewsId :: [Tag BS.ByteString] -> T.Text
-extractNewsId = T.decodeUtf8 . fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
+extractNewsId :: [Tag T.Text] -> T.Text
+extractNewsId = fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
 
-extractAuthor :: [Tag BS.ByteString] -> T.Text
-extractAuthor = T.dropAround (\x -> x == '.' || isSpace x) . T.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
+extractAuthor :: [Tag T.Text] -> T.Text
+extractAuthor = T.dropAround (\x -> x == '.' || isSpace x) . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
 
-takeBetweens :: String -> String -> [Tag BS.ByteString] -> [[Tag BS.ByteString]]
+takeBetweens :: String -> String -> [Tag T.Text] -> [[Tag T.Text]]
 takeBetweens fromTag toTag = fmap (takeWhile (~/= toTag)) . sections (~== fromTag)
 
-takeBetween :: String -> String -> [Tag BS.ByteString] -> [Tag BS.ByteString]
+takeBetween :: String -> String -> [Tag T.Text] -> [Tag T.Text]
 takeBetween fromTag toTag soup =
   case takeBetweens fromTag toTag soup of
     subSoup:_ -> subSoup
