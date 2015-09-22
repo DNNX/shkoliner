@@ -30,7 +30,7 @@ instance ToJSON ArticleMetaData
 
 instance FromRecord ArticleMetaData where
   parseRecord v
-    | length v == 3 =
+    | length v == 5 =
         ArticleMetaData
           <$>  v .! 0
           <*> (v .! 1 >>= parseTime'')
