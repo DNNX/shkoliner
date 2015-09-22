@@ -19,11 +19,11 @@ import Data.Functor.Identity
 type ShkoloUrl = String
 
 data ArticleMetaData = ArticleMetaData
-    { _title       :: LT.Text
-    , _publishedAt :: ZonedTime
-    , _link        :: LT.Text
-    , _newsId      :: LT.Text
-    , _author      :: LT.Text
+    { _title       :: !LT.Text
+    , _publishedAt :: !ZonedTime
+    , _link        :: !LT.Text
+    , _newsId      :: !LT.Text
+    , _author      :: !LT.Text
     } deriving (Show, Generic)
 
 instance ToJSON ArticleMetaData
