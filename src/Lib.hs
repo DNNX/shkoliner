@@ -107,7 +107,7 @@ extractArticles allTags =
       articleTag :: Tag LBS.ByteString -> Bool
       articleTag tag =
         case tag of
-          TagOpen "article" attrs -> "b-posts-1-item" `LBS.isPrefixOf` (fromMaybe LBS.empty $ Prelude.lookup "class" attrs)
+          TagOpen "article" attrs -> "b-posts-1-item" `LBS.isPrefixOf` fromMaybe LBS.empty (Prelude.lookup "class" attrs)
           _                       -> False
   in fmap extractArticle articleSections
 
