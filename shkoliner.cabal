@@ -28,7 +28,7 @@ library
                      , utf8-string
                      , time
                      , text
-                     , scalpel
+                     , tagsoup
                      , aeson
                      , cassava
   default-language:    Haskell2010

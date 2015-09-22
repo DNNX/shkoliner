@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Lib
     ( numPages,
@@ -22,9 +23,10 @@ import System.FilePath
 import System.Directory
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
-import Text.HTML.Scalpel
-import Data.Maybe
+import Text.HTML.TagSoup
 import Data.Csv
+import Data.Time
+import Data.Char
 
 numPages :: ShkoloUrl -> IO Int
 numPages baseUrl = whatTheNat $ \page ->
@@ -95,24 +97,45 @@ dumpMetas articles fName =
 
 scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
 scrapePage url = do
-    bytes :: LBS.ByteString <- cachedGet url
-    let txt = LT.decodeUtf8 bytes
-    return $ fromJust $ scrapeStringLike txt articles
-  where
-    articles :: Scraper LT.Text [ArticleMetaData]
-    articles = chroots ("article" @: [hasClass "news_for_copy"]) article
+  bytes :: LBS.ByteString <- cachedGet url
+  return $ extractArticles $ parseTags bytes
 
-    article :: Scraper LT.Text ArticleMetaData
-    article = do
-      _title <- text $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "span"
-      _pubAt <- attr "datetime" "time" >>= parseTime'
-      _link  <- attr "href" $ ("h3" @: [hasClass "b-posts-1-item__title"]) // "a"
-      _newsId <- attr "news_id" ("span" @: [hasClass "show_news_view_count"])
-      _author <- Just <$> text ("span" @: [hasClass "right-side"])
-      return $
-        ArticleMetaData
-          _title
-          _pubAt
-          _link
-          _newsId
-          _author
+extractArticles :: [Tag LBS.ByteString] -> [ArticleMetaData]
+extractArticles allTags =
+  let articleSections = sections articleTag allTags
+      articleTag :: Tag LBS.ByteString -> Bool
+      articleTag = (~== ("<article class=\"b-posts-1-item b-content-posts-1-item news_for_copy\">" :: String))
+  in fmap extractArticle articleSections
+
+extractArticle :: [Tag LBS.ByteString] -> ArticleMetaData
+extractArticle tags =
+  ArticleMetaData
+    (extractTitle tags)
+    (extractPubAt tags)
+    (extractLink tags)
+    (extractNewsId tags)
+    (extractAuthor tags)
+
+extractTitle :: [Tag LBS.ByteString] -> LT.Text
+extractTitle = LT.decodeUtf8 . innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+
+extractPubAt :: [Tag LBS.ByteString] -> ZonedTime
+extractPubAt = parseTime'' . LT.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
+
+extractLink :: [Tag LBS.ByteString] -> LT.Text
+extractLink = LT.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+
+extractNewsId :: [Tag LBS.ByteString] -> LT.Text
+extractNewsId = LT.decodeUtf8 . fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
+
+extractAuthor :: [Tag LBS.ByteString] -> Maybe LT.Text
+extractAuthor = Just . LT.dropAround (\x -> x == '.' || isSpace x) . LT.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
+
+takeBetweens :: String -> String -> [Tag LBS.ByteString] -> [[Tag LBS.ByteString]]
+takeBetweens fromTag toTag = fmap (takeWhile (~/= toTag)) . sections (~== fromTag)
+
+takeBetween :: String -> String -> [Tag LBS.ByteString] -> [Tag LBS.ByteString]
+takeBetween fromTag toTag soup =
+  case takeBetweens fromTag toTag soup of
+    subSoup:_ -> subSoup
+    []        -> error "can't find a tag"

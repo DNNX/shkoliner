@@ -6,6 +6,7 @@ module Types
     ( ShkoloUrl
     , ArticleMetaData(..)
     , parseTime'
+    , parseTime''
     ) where
 
 import Data.Time
@@ -14,6 +15,7 @@ import Data.Aeson
 import GHC.Generics
 import Data.Csv
 import Control.Monad
+import Data.Functor.Identity
 
 type ShkoloUrl = String
 
@@ -50,6 +52,9 @@ instance ToRecord ArticleMetaData where
 
 parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
 parseTime' = parseTimeM False defaultTimeLocale fmt . LT.unpack
+
+parseTime'' :: ParseTime t => LT.Text -> t
+parseTime'' = runIdentity . parseTime'
 
 unparseTime :: ZonedTime -> LT.Text
 unparseTime = LT.pack . formatTime defaultTimeLocale fmt
