@@ -6,7 +6,6 @@ module Types
     ( ShkoloUrl
     , ArticleMetaData(..)
     , parseTime'
-    , parseTime''
     ) where
 
 import Data.Time
@@ -34,7 +33,7 @@ instance FromRecord ArticleMetaData where
     | length v == 3 =
         ArticleMetaData
           <$>  v .! 0
-          <*> (v .! 1 >>= parseTime')
+          <*> (v .! 1 >>= parseTime'')
           <*>  v .! 2
           <*>  v .! 3
           <*>  v .! 4
@@ -50,11 +49,11 @@ instance ToRecord ArticleMetaData where
     toField _author
     ]
 
-parseTime' :: (Monad m, ParseTime t) => LT.Text -> m t
-parseTime' = parseTimeM False defaultTimeLocale fmt . LT.unpack
+parseTime'' :: (Monad m, ParseTime t) => LT.Text -> m t
+parseTime'' = parseTimeM False defaultTimeLocale fmt . LT.unpack
 
-parseTime'' :: ParseTime t => LT.Text -> t
-parseTime'' = runIdentity . parseTime'
+parseTime' :: ParseTime t => LT.Text -> t
+parseTime' = runIdentity . parseTime''
 
 unparseTime :: ZonedTime -> LT.Text
 unparseTime = LT.pack . formatTime defaultTimeLocale fmt

@@ -124,7 +124,7 @@ extractTitle :: [Tag LBS.ByteString] -> LT.Text
 extractTitle = LT.decodeUtf8 . innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
 
 extractPubAt :: [Tag LBS.ByteString] -> ZonedTime
-extractPubAt = parseTime'' . LT.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
+extractPubAt = parseTime' . LT.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
 
 extractLink :: [Tag LBS.ByteString] -> LT.Text
 extractLink = LT.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
