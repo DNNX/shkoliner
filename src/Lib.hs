@@ -16,13 +16,14 @@ import Network.Wreq
 import Control.Lens
 import Control.Exception as E
 import qualified Network.HTTP.Client as HTTP
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.UTF8 as LBS8
-import qualified Data.ByteString.Base64.Lazy as LBase64
+import qualified Data.ByteString.UTF8 as BS8
+import qualified Data.ByteString.Base64 as Base64
 import System.FilePath
 import System.Directory
-import qualified Data.Text.Lazy as LT
-import qualified Data.Text.Lazy.Encoding as LT
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Text.HTML.TagSoup
 import Data.Csv
 import Data.Time
@@ -66,25 +67,25 @@ isShkoloOk url = do
       | otherwise              = throwIO e
     handler e                  = throwIO e
 
-cachedGet :: ShkoloUrl -> IO LBS.ByteString
+cachedGet :: ShkoloUrl -> IO BS.ByteString
 cachedGet =
   cached
     (\url ->  "./cache" </> fsKey url)
-    (\url -> view responseBody <$> get url)
+    (\url -> LBS.toStrict . view responseBody <$> get url)
 
-cached :: (k -> FilePath) -> (k -> IO LBS.ByteString) -> k -> IO LBS.ByteString
+cached :: (k -> FilePath) -> (k -> IO BS.ByteString) -> k -> IO BS.ByteString
 cached toFilePath load key = do
   let fPath = toFilePath key
   cachedAlready <- doesFileExist fPath
   if cachedAlready
-    then LBS.readFile fPath
+    then BS.readFile fPath
     else do
       d <- load key
-      LBS.writeFile fPath d
+      BS.writeFile fPath d
       return d
 
 fsKey :: ShkoloUrl -> FilePath
-fsKey = LBS8.toString . LBase64.encode . LBS8.fromString
+fsKey = BS8.toString . Base64.encode . BS8.fromString
 
 scrapeAll :: ShkoloUrl -> IO [ArticleMetaData]
 scrapeAll baseUrl = do
@@ -98,20 +99,20 @@ dumpMetas articles fName =
 
 scrapePage :: ShkoloUrl -> IO [ArticleMetaData]
 scrapePage url = do
-  bytes :: LBS.ByteString <- cachedGet url
+  bytes :: BS.ByteString <- cachedGet url
   return $ extractArticles $ parseTags bytes
 
-extractArticles :: [Tag LBS.ByteString] -> [ArticleMetaData]
+extractArticles :: [Tag BS.ByteString] -> [ArticleMetaData]
 extractArticles allTags =
   let articleSections = sections articleTag allTags
-      articleTag :: Tag LBS.ByteString -> Bool
+      articleTag :: Tag BS.ByteString -> Bool
       articleTag tag =
         case tag of
-          TagOpen "article" attrs -> "b-posts-1-item" `LBS.isPrefixOf` fromMaybe LBS.empty (Prelude.lookup "class" attrs)
+          TagOpen "article" attrs -> "b-posts-1-item" `BS.isPrefixOf` fromMaybe BS.empty (Prelude.lookup "class" attrs)
           _                       -> False
   in fmap extractArticle articleSections
 
-extractArticle :: [Tag LBS.ByteString] -> ArticleMetaData
+extractArticle :: [Tag BS.ByteString] -> ArticleMetaData
 extractArticle tags =
   ArticleMetaData
     (extractTitle tags)
@@ -120,25 +121,25 @@ extractArticle tags =
     (extractNewsId tags)
     (extractAuthor tags)
 
-extractTitle :: [Tag LBS.ByteString] -> LT.Text
-extractTitle = LT.decodeUtf8 . innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+extractTitle :: [Tag BS.ByteString] -> T.Text
+extractTitle = T.decodeUtf8 . innerText . takeBetween "<span>" "</span>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
 
-extractPubAt :: [Tag LBS.ByteString] -> ZonedTime
-extractPubAt = parseTime' . LT.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
+extractPubAt :: [Tag BS.ByteString] -> ZonedTime
+extractPubAt = parseTime' . T.decodeUtf8 . fromAttrib "datetime" . head . takeBetween "<time>" "</time>"
 
-extractLink :: [Tag LBS.ByteString] -> LT.Text
-extractLink = LT.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
+extractLink :: [Tag BS.ByteString] -> T.Text
+extractLink = T.decodeUtf8 . fromAttrib "href" . head . takeBetween "<a>" "</a>" . takeBetween "<h3 class=\"b-posts-1-item__title\">" "</h3>"
 
-extractNewsId :: [Tag LBS.ByteString] -> LT.Text
-extractNewsId = LT.decodeUtf8 . fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
+extractNewsId :: [Tag BS.ByteString] -> T.Text
+extractNewsId = T.decodeUtf8 . fromAttrib "news_id" . head . takeBetween "<span class=\"show_news_view_count\">" "</span>"
 
-extractAuthor :: [Tag LBS.ByteString] -> LT.Text
-extractAuthor = LT.dropAround (\x -> x == '.' || isSpace x) . LT.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
+extractAuthor :: [Tag BS.ByteString] -> T.Text
+extractAuthor = T.dropAround (\x -> x == '.' || isSpace x) . T.decodeUtf8 . innerText . takeBetween "<span class=\"show_news_view_count\">" "</footer>"
 
-takeBetweens :: String -> String -> [Tag LBS.ByteString] -> [[Tag LBS.ByteString]]
+takeBetweens :: String -> String -> [Tag BS.ByteString] -> [[Tag BS.ByteString]]
 takeBetweens fromTag toTag = fmap (takeWhile (~/= toTag)) . sections (~== fromTag)
 
-takeBetween :: String -> String -> [Tag LBS.ByteString] -> [Tag LBS.ByteString]
+takeBetween :: String -> String -> [Tag BS.ByteString] -> [Tag BS.ByteString]
 takeBetween fromTag toTag soup =
   case takeBetweens fromTag toTag soup of
     subSoup:_ -> subSoup

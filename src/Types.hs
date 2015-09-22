@@ -9,7 +9,7 @@ module Types
     ) where
 
 import Data.Time
-import qualified Data.Text.Lazy as LT
+import qualified Data.Text as T
 import Data.Aeson
 import GHC.Generics
 import Data.Csv
@@ -19,11 +19,11 @@ import Data.Functor.Identity
 type ShkoloUrl = String
 
 data ArticleMetaData = ArticleMetaData
-    { _title       :: !LT.Text
+    { _title       :: !T.Text
     , _publishedAt :: !ZonedTime
-    , _link        :: !LT.Text
-    , _newsId      :: !LT.Text
-    , _author      :: !LT.Text
+    , _link        :: !T.Text
+    , _newsId      :: !T.Text
+    , _author      :: !T.Text
     } deriving (Show, Generic)
 
 instance ToJSON ArticleMetaData
@@ -49,14 +49,14 @@ instance ToRecord ArticleMetaData where
     toField _author
     ]
 
-parseTime'' :: (Monad m, ParseTime t) => LT.Text -> m t
-parseTime'' = parseTimeM False defaultTimeLocale fmt . LT.unpack
+parseTime'' :: (Monad m, ParseTime t) => T.Text -> m t
+parseTime'' = parseTimeM False defaultTimeLocale fmt . T.unpack
 
-parseTime' :: ParseTime t => LT.Text -> t
+parseTime' :: ParseTime t => T.Text -> t
 parseTime' = runIdentity . parseTime''
 
-unparseTime :: ZonedTime -> LT.Text
-unparseTime = LT.pack . formatTime defaultTimeLocale fmt
+unparseTime :: ZonedTime -> T.Text
+unparseTime = T.pack . formatTime defaultTimeLocale fmt
 
 fmt :: String
 fmt = "%Y-%m-%dT%H:%M:%S%z"
